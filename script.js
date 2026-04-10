@@ -59,4 +59,42 @@
     });
   }
 
+  /* --- Lightbox (click-to-enlarge) for screenshot images --- */
+  var lb        = document.getElementById('lightbox');
+  var lbImg     = document.getElementById('lightbox-img');
+  var lbClose   = document.getElementById('lightbox-close');
+
+  function openLightbox(src, alt) {
+    lbImg.src = src;
+    lbImg.alt = alt || '';
+    lb.hidden = false;
+    document.body.style.overflow = 'hidden';
+    lbClose.focus();
+  }
+
+  function closeLightbox() {
+    lb.hidden = true;
+    lbImg.src = '';
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('.screenshot-img').forEach(function (img) {
+    img.addEventListener('click', function () {
+      openLightbox(img.src, img.alt);
+    });
+  });
+
+  if (lbClose) {
+    lbClose.addEventListener('click', closeLightbox);
+  }
+
+  if (lb) {
+    lb.addEventListener('click', function (e) {
+      if (e.target === lb) closeLightbox();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !lb.hidden) closeLightbox();
+    });
+  }
+
 })();
