@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Deceptive Pattern Detector - UC Berkeley MIDS Capstone 2026</title>
+  <meta name="description" content="A Chrome extension that runs an in-browser MiniLM + server-side XGBoost pipeline to detect eight classes of dark patterns in real time." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- NAV -->
+  <header class="site-nav" id="site-nav">
+    <div class="nav-inner">
+      <a href="#hero" class="nav-brand">
+        <svg class="nav-logo-icon" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="15" cy="15" r="13.5" fill="#e9a23b" stroke="#c97d20" stroke-width="1.5"/>
+          <circle cx="20" cy="21" r="5.5" fill="#fff" stroke="#c97d20" stroke-width="1.2"/>
+        </svg>
+        <span class="nav-brand-text">Deceptive Pattern Detector</span>
+      </a>
+      <nav aria-label="Main navigation">
+        <ul class="nav-links" id="nav-links">
+          <li><a href="#demo">Trailer</a></li>
+          <li><a href="#problem">Problem</a></li>
+          <li><a href="#solution">Solution</a></li>
+          <li><a href="#pipeline">Pipeline</a></li>
+          <li><a href="#patterns">Patterns</a></li>
+          <li><a href="#tooling">Tooling</a></li>
+          <li><a href="#results">Results</a></li>
+          <li><a href="#team">Team</a></li>
+        </ul>
+      </nav>
+      <div class="nav-badge-wrap">
+        <span class="nav-badge">UC Berkeley &middot; MIDS &middot; Spring 2026</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section id="hero" class="section hero-section">
+    <div class="container hero-container">
+
+      <div class="hero-text">
+        <div class="kicker">DATASCI 210 Capstone &nbsp;&middot;&nbsp; Spring 2026</div>
+        <h1>Detecting Dark Patterns<br>on the <em class="accent-em">Open Web</em></h1>
+        <p class="hero-sub">
+          A Chrome extension that runs a two-stage ML pipeline: semantic
+          embeddings computed in-browser and eight XGBoost classifiers on the server,
+          identifying deceptive UI patterns in real time as you browse.
+        </p>
+
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <span class="hs-n">8</span>
+            <span class="hs-l">Pattern Classes</span>
+          </div>
+          <div class="hs-div"></div>
+          <div class="hero-stat">
+            <span class="hs-n">80+</span>
+            <span class="hs-l">ML Features</span>
+          </div>
+          <div class="hs-div"></div>
+          <div class="hero-stat">
+            <span class="hs-n">~80%</span>
+            <span class="hs-l">Elements Filtered</span>
+          </div>
+          <div class="hs-div"></div>
+          <div class="hero-stat">
+            <span class="hs-n">&lt;200ms</span>
+            <span class="hs-l">End-to-End</span>
+          </div>
+        </div>
+
+        <div class="hero-ctas">
+          <a href="#pipeline" class="btn-primary">See How It Works</a>
+          <a href="#patterns" class="btn-ghost">Explore Patterns</a>
+        </div>
+      </div>
+
+      <!-- Browser + extension popup mockup -->
+      <div class="hero-visual" aria-hidden="true">
+        <div class="browser-mockup">
+          <div class="brow-chrome">
+            <div class="brow-dots">
+              <span class="dot dot-r"></span>
+              <span class="dot dot-y"></span>
+              <span class="dot dot-g"></span>
+            </div>
+            <div class="brow-url">
+              <span class="brow-lock">https</span>
+              shop.example.com/checkout
+            </div>
+            <div class="brow-ext-area">
+              <div class="ext-toolbar-btn alerting">
+                <svg viewBox="0 0 30 30" fill="none">
+                  <circle cx="15" cy="15" r="13.5" fill="#e9a23b" stroke="#c97d20" stroke-width="1.5"/>
+                  <circle cx="20" cy="21" r="5.5" fill="#fff" stroke="#c97d20" stroke-width="1.2"/>
+                </svg>
+                <span class="ext-badge-dot">3</span>
+              </div>
+            </div>
+          </div>
+          <div class="brow-body">
+            <div class="fake-page-inner">
+
+              <!-- Simulated site header -->
+              <div class="fp-header">
+                <strong class="fp-site-brand">Stackfolio</strong>
+                <span class="fp-nav-items">Templates &nbsp; Pricing &nbsp; Login</span>
+              </div>
+
+              <!-- Dark overlay + modal -->
+              <div class="fp-modal-backdrop">
+                <div class="fp-modal">
+                  <div class="fp-modal-badge">Free plan available</div>
+                  <div class="fp-modal-heading">Get Pro Free for 60 Days</div>
+                  <p class="fp-modal-sub">Unlock custom domains, analytics, and unlimited pages. No credit card required.</p>
+                  <button class="fp-modal-cta">Start My Free Trial</button>
+                  <button class="fp-modal-shame">No thanks, a GitHub README is a perfectly professional portfolio.</button>
+                </div>
+              </div>
+
+              <!-- Real popup card, positioned top-right -->
+              <div class="ext-popup">
+                <div class="ep-cs-row">
+
+                  <!-- Icon column (Icons-02 teal) -->
+                  <div class="ep-icon-col">
+                    <svg class="ep-cs-icon" viewBox="0 0 30.17 30.17" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="15.09" cy="15.09" r="14.09" fill="#2da4a9" stroke="#a7a9ac" stroke-width="2" stroke-linecap="round"/>
+                      <circle cx="20.64" cy="21.63" r="5.55" fill="#fff" stroke="#a7a9ac" stroke-linecap="round"/>
+                    </svg>
+                    <span class="ep-icon-num">02</span>
+                  </div>
+
+                  <!-- Content column -->
+                  <div class="ep-opts-col">
+                    <div class="ep-cs-title">Asymmetric Choice Detected</div>
+                    <div class="ep-cs-desc">One option is prominently styled while the other is de-emphasized or hidden.</div>
+                    <div class="ep-opt">
+                      <span class="ep-role ep-role-accept">&#x2714;</span>
+                      Start My Free Trial
+                    </div>
+                    <div class="ep-opt">
+                      <span class="ep-role ep-role-decline">&#x2718;</span>
+                      No thanks, a GitHub README is a perfectly professional portfolio.
+                    </div>
+                  </div>
+
+                  <!-- Thumbs -->
+                  <div class="ep-thumbs-col">
+                    <button class="ep-thumb" title="Not deceptive" aria-label="Thumbs up">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/><path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg>
+                    </button>
+                    <button class="ep-thumb" title="Flag as deceptive" aria-label="Thumbs down">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0122 4v7a2.31 2.31 0 01-2.33 2H17"/></svg>
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- DEMO VIDEO -->
+  <section id="demo" class="demo-section">
+    <div class="container">
+      <div class="demo-header">
+        <div class="demo-badge">Official Trailer</div>
+        <h2 class="demo-title">They hide in plain sight.<br><span class="demo-title-accent">Not anymore.</span></h2>
+        <p class="demo-sub">Two minutes. Eight pattern types. One browser extension that catches what you miss.</p>
+      </div>
+      <a href="https://www.youtube.com/watch?v=LoHKPrDWxho" target="_blank" rel="noopener noreferrer" class="demo-theater">
+        <img src="https://img.youtube.com/vi/LoHKPrDWxho/maxresdefault.jpg" alt="Watch the promo on YouTube" class="demo-thumb">
+        <div class="demo-overlay">
+          <div class="demo-play-btn">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="28" height="28"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <div class="demo-runtime">2 min &nbsp;·&nbsp; YouTube</div>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- PROBLEM -->
+  <section id="problem" class="section section-alt">
+    <div class="container">
+      <div class="section-label">The Problem</div>
+      <h2 class="section-h2">Dark Patterns Are <em class="accent-em">Everywhere</em></h2>
+
+      <div class="two-col">
+        <div class="tc-body">
+          <p>
+            <strong>Deceptive design patterns,</strong> commonly called dark patterns, are
+            manipulative UI techniques deployed by websites to influence users into actions that
+            benefit businesses at users' expense: guilt-laden decline buttons, fabricated stock
+            limits, deliberately confusing opt-out language, and interfaces that bury privacy controls.
+          </p>
+          <p>
+            Unlike outright fraud, dark patterns operate in a <strong>legal gray zone</strong>:
+            psychologically coercive but technically compliant. A <a href="https://dl.acm.org/doi/10.1145/3359183" target="_blank" rel="noopener">2019 study by Mathur et al.</a> found
+            dark patterns on over <strong>11% of 11,000 shopping websites</strong> surveyed.
+            Regulatory attention is growing as the FTC and European regulators issue guidance
+            and enforcement actions, yet users remain largely unaware while browsing.
+          </p>
+          <p>
+            The core challenge is <strong>detection at scale.</strong> Dark patterns depend on
+            contextual signals including visual asymmetry, linguistic framing, and interface hierarchy
+            that keyword rules alone cannot capture. Existing academic datasets label patterns at the
+            element level but generalize poorly to live, adversarially designed production pages.
+          </p>
+
+          <div class="prob-stats-row">
+            <div class="prob-stat">
+              <span class="ps-n">11%</span>
+              <span class="ps-l">of shopping sites use dark patterns (<a href="https://dl.acm.org/doi/10.1145/3359183" target="_blank" rel="noopener">Mathur et al. 2019</a>)</span>
+            </div>
+            <div class="prob-stat">
+              <span class="ps-n">FTC</span>
+              <span class="ps-l">and EU regulators issuing enforcement actions</span>
+            </div>
+            <div class="prob-stat">
+              <span class="ps-n">Zero</span>
+              <span class="ps-l">real-time detection tools available to everyday users, until now</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tc-image">
+          <figure class="screenshot-fig">
+            <img src="images/dark-pattern-urgency.png"
+                 alt="ShopNest cart showing 9:46 countdown timer pressuring immediate checkout"
+                 class="screenshot-img" />
+            <figcaption>
+              <strong>Urgency:</strong> A manufactured countdown timer appears in both the
+              banner and order summary, pressuring immediate checkout. This timer is cosmetic.
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOLUTION -->
+  <section id="solution" class="section">
+    <div class="container">
+      <div class="section-label">Our Solution</div>
+      <h2 class="section-h2">Real-Time Detection,<br>Right in Your Browser</h2>
+      <p class="section-intro">
+        The Deceptive Pattern Detector is a Chrome extension that automatically scans pages as
+        you browse with no manual action required. It flags manipulative UI elements with
+        plain-English explanations and calibrated confidence scores, giving users the awareness
+        to make truly informed decisions.
+      </p>
+
+      <div class="sol-cards">
+        <div class="sol-card">
+          <div class="sol-card-icon-wrap">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path d="M6 20v-2a4 4 0 018 0v2"/>
+            </svg>
+          </div>
+          <h3>Who It's For</h3>
+          <p>
+            Any user browsing e-commerce sites, SaaS sign-up flows, subscription services, or
+            hotel and travel booking pages, where dark patterns are most prevalent.
+            No technical knowledge required.
+          </p>
+        </div>
+        <div class="sol-card">
+          <div class="sol-card-icon-wrap">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
+              <rect x="3" y="11" width="14" height="8" rx="2"/>
+              <path d="M7 11V7a3 3 0 016 0v4"/>
+            </svg>
+          </div>
+          <h3>Privacy First</h3>
+          <p>
+            Semantic embeddings are computed entirely in your browser via ONNX Runtime WebAssembly.
+            Only stripped, anonymized candidate elements above a confidence threshold ever reach
+            the classification server.
+          </p>
+        </div>
+        <div class="sol-card">
+          <div class="sol-card-icon-wrap">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M13 10H3m0 0l3-3m-3 3l3 3M17 10h-1"/>
+            </svg>
+          </div>
+          <h3>Low Latency</h3>
+          <p>
+            The two-stage gatekeeper filters roughly 80% of elements before any server call.
+            In-browser embedding completes in under 150&thinsp;ms.
+            Full end-to-end classification under 200&thinsp;ms.
+          </p>
+        </div>
+        <div class="sol-card">
+          <div class="sol-card-icon-wrap">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M2 5h16M2 10h10M2 15h7"/>
+            </svg>
+          </div>
+          <h3>Plain-English Alerts</h3>
+          <p>
+            Rather than raw model scores, the popup explains <em>what</em> was detected and
+            <em>why</em> it is manipulative, raising awareness rather than silently
+            blocking content.
+          </p>
+        </div>
+      </div>
+
+      <div class="screenshot-pair">
+        <figure class="screenshot-fig">
+          <img src="images/dark-pattern-scarcity.png"
+               alt="Sol Studio product page with ONLY 4 PAIRS LEFT IN YOUR SIZE scarcity claim"
+               class="screenshot-img" />
+          <figcaption>
+            <strong>Scarcity:</strong> A fabricated low-stock claim alongside a "Limited Drop"
+            badge combines urgency language with visual styling to pressure immediate purchase.
+          </figcaption>
+        </figure>
+        <figure class="screenshot-fig">
+          <img src="images/dark-pattern-trick-question.png"
+               alt="Hargreave hotel booking with pre-checked Travel Protection charge of 49.98 euros"
+               class="screenshot-img" />
+          <figcaption>
+            <strong>Forced Add-on:</strong> A pre-checked travel insurance fee silently adds
+            &euro;49.98 to the total. The charge appears in the order summary before the user
+            notices the checkbox.
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- PIPELINE -->
+  <section id="pipeline" class="section section-alt">
+    <div class="container">
+      <div class="section-label">Technical Approach</div>
+      <h2 class="section-h2">A Two-Stage ML Pipeline</h2>
+      <p class="section-intro">
+        The system resolves a core tension: accuracy requires semantic understanding, but
+        sending every UI element to a server is too slow and raises privacy concerns. The
+        architecture runs expensive work in-browser first, then sends only high-confidence
+        candidates through the network.
+      </p>
+
+      <div class="pipeline-cols">
+
+        <!-- ── In-Browser column ── -->
+        <div class="pipeline-col pipe-col-client">
+          <div class="stage-banner stage-client">
+            <span class="stage-badge">Stage 1: In-Browser</span>
+            <span class="stage-desc">JavaScript &middot; ONNX Runtime WASM &middot; No network calls</span>
+          </div>
+
+          <div class="pipe-step">
+            <div class="pipe-num">1</div>
+            <div class="pipe-body">
+              <code class="pipe-file">choice_set_extractor.js</code>
+              <h3>Choice Set Extraction</h3>
+              <p>Walks the Accessibility Tree and DOM to identify decision-point UI groups: clusters of buttons, links, and checkboxes that together present a binary or multi-way choice. Each set captures option labels, CSS computed properties, and subtree structure.</p>
+            </div>
+          </div>
+
+          <div class="pipe-step">
+            <div class="pipe-num">2</div>
+            <div class="pipe-body">
+              <code class="pipe-file">noise_classifier.js</code>
+              <h3>Noise Filtering</h3>
+              <p>Uses Jaccard similarity and keyword matching to discard navigation chrome, footers, social share buttons, and other non-decision UI. Eliminates the majority of candidate elements at negligible compute cost.</p>
+            </div>
+          </div>
+
+          <div class="pipe-step">
+            <div class="pipe-num">3</div>
+            <div class="pipe-body">
+              <code class="pipe-file">offscreen_embedder.js</code>
+              <h3>In-Browser MiniLM</h3>
+              <p>Runs all-MiniLM-L6-v2 via ONNX Runtime WebAssembly in a dedicated offscreen document, generating 384-dimensional semantic vectors for choice-set text without any network call. Embedding completes in under 150&thinsp;ms.</p>
+            </div>
+          </div>
+
+          <div class="pipe-step">
+            <div class="pipe-num">4</div>
+            <div class="pipe-body">
+              <code class="pipe-file">dp_gatekeeper.js</code>
+              <h3>Gatekeeper</h3>
+              <p>Applies cosine-similarity threshold against dark-pattern anchor embeddings. Only candidates whose similarity exceeds the gate (roughly 20% of inputs) proceed to the server, cutting both latency and data exposure.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Server column ── -->
+        <div class="pipeline-col pipe-col-server">
+          <div class="stage-banner stage-server">
+            <span class="stage-badge">Stage 2: Server</span>
+            <span class="stage-desc">Flask API &middot; XGBoost &middot; scikit-learn calibration</span>
+          </div>
+
+          <div class="pipe-step">
+            <div class="pipe-num">5</div>
+            <div class="pipe-body">
+              <code class="pipe-file">Flask API &middot; XGBoost</code>
+              <h3>Classification + Calibration</h3>
+              <p>Eight independent binary classifiers evaluate 80+ engineered features: text signals, CSS asymmetry, structural properties, and embedding features. Raw probabilities are post-hoc calibrated via Platt scaling for meaningful confidence scores.</p>
+            </div>
+          </div>
+
+          <div class="pipe-step">
+            <div class="pipe-num">6</div>
+            <div class="pipe-body">
+              <code class="pipe-file">Extension Popup</code>
+              <h3>User Alert</h3>
+              <p>The popup displays flagged patterns with plain-English descriptions and calibrated confidence scores. The toolbar badge icon updates to reflect the current page risk level at a glance.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="feat-groups-wrap">
+        <div class="section-label" style="margin-top:3rem;">V3 Feature Groups: 80+ features per choice set</div>
+        <div class="feat-groups-grid">
+          <div class="feat-group-card">
+            <div class="fg-title">Text Signals</div>
+            <ul class="fg-list">
+              <li>Urgency phrases and countdown timers</li>
+              <li>Scarcity claims ("only N left")</li>
+              <li>Social proof language</li>
+              <li>Guilt-framing in decline buttons</li>
+              <li>Promotional and discount language</li>
+            </ul>
+          </div>
+          <div class="feat-group-card">
+            <div class="fg-title">CSS Aggregates</div>
+            <ul class="fg-list">
+              <li>Font size and weight per option</li>
+              <li>Opacity and visibility flags</li>
+              <li>Low-contrast and gray-text counts</li>
+              <li>z-index and position:absolute outliers</li>
+              <li>Button sizing differentials</li>
+            </ul>
+          </div>
+          <div class="feat-group-card">
+            <div class="fg-title">Structural</div>
+            <ul class="fg-list">
+              <li>AX subtree size</li>
+              <li>Option count and label lengths</li>
+              <li>Dialog and modal detection</li>
+              <li>Duplicate container count</li>
+              <li>Nesting depth</li>
+            </ul>
+          </div>
+          <div class="feat-group-card">
+            <div class="fg-title">Embedding</div>
+            <ul class="fg-list">
+              <li>MiniLM cosine similarity</li>
+              <li>Accept vs. decline role scores</li>
+              <li>Choice asymmetry signals</li>
+              <li>Cross-option semantic distance</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PATTERNS -->
+  <section id="patterns" class="section">
+    <div class="container">
+      <div class="section-label">Dark Pattern Taxonomy</div>
+      <h2 class="section-h2">Eight Classes We Detect</h2>
+      <p class="section-intro">
+        The classifier targets eight classes drawn from established academic taxonomies
+        (<a href="https://dl.acm.org/doi/10.1145/3173574.3174108" target="_blank" rel="noopener">Gray et al. 2018</a>; <a href="https://dl.acm.org/doi/10.1145/3359183" target="_blank" rel="noopener">Mathur et al. 2019</a>) and refined for detectability
+        from client-side structure. Select any card to expand.
+      </p>
+
+      <div class="pattern-grid" id="pattern-grid">
+
+        <button class="pat-card" data-pattern="confirm_shaming">
+          <div class="pat-card-inner">
+            <div class="pat-top">
+              <span class="pat-chip pat-chip-cs">CS</span>
+              <span class="pat-risk risk-high">High Risk</span>
+            </div>
+            <h3 class="pat-name">Confirm-Shaming</h3>
+            <p class="pat-short">Decline buttons use guilt-inducing language to pressure acceptance.</p>
+            <div class="pat-detail" id="pd-confirm_shaming">
+              <p>The decline option is phrased to make users feel foolish, selfish, or irresponsible for not accepting. The manipulation shifts moral framing rather than appealing to the product's merits.</p>
+              <div class="pat-example">"No thanks, I prefer paying full price"</div>
+            </div>
+          </div>
+        </button>
+
+        <button class="pat-card" data-pattern="urgency">
+          <div class="pat-card-inner">
+            <div class="pat-top">
+              <span class="pat-chip pat-chip-ur">UR</span>
+              <span class="pat-risk risk-high">High Risk</span>
+            </div>
+            <h3 class="pat-name">Urgency</h3>
+            <p class="pat-short">Artificial deadlines or countdown timers rush decision-making.</p>
+            <div class="pat-detail" id="pd-urgency">
+              <p>Countdown timers, expiring cart reservations, and deadline language create artificial scarcity of time. These timers are frequently cosmetic and reset on page reload.</p>
+              <div class="pat-example">"Your cart is reserved, but not for long! 9:46 remaining"</div>
+            </div>
+          </div>
+        </button>
+
+        <button class="pat-card" data-pattern="scarcity">
+          <div class="pat-card-inner">
+            <div class="pat-top">
+              <span class="pat-chip pat-chip-sc">SC</span>
+              <span class="pat-risk risk-high">High Risk</span>
+            </div>
+            <h3 class="pat-name">Scarcity</h3>
+            <p class="pat-short">Fabricated low-stock or high-demand claims pressure immediate action.</p>
+            <div class="pat-detail" id="pd-scarcity">
+              <p>Low-stock counts, competitor-cart claims, and limited-edition labels are commonly fabricated or dynamically inflated to trigger loss aversion before the user has time to think.</p>
+              <div class="pat-example">"Only 4 pairs left in your size"</div>
+            </div>
+          </div>
+        </button>
+
+        <button class="pat-card" data-pattern="privacy_zuckering">
+          <div class="pat-card-inner">
+            <div class="pat-top">
+              <span class="pat-chip pat-chip-pz">PZ</span>
+              <span class="pat-risk risk-high">High Risk</span>
+            </div>
+            <h3 class="pat-name">Privacy Zuckering</h3>
+            <p class="pat-short">Interfaces obscure privacy controls to maximize data collection.</p>
+            <div class="pat-detail" id="pd-privacy_zuckering">
+              <p>Privacy settings are buried behind multiple clicks, styled as low-prominence links, or default to maximum data sharing with opt-out paths deliberately obfuscated.</p>
+              <div class="pat-example">Large "Accept All" button with tiny gray "manage preferences" link</div>
+            </div>
+          </div>
+        </button>
+
+        <button class="pat-card" data-pattern="asymmetric_choice">
+          <div class="pat-card-inner">
+            <div class="pat-top">
+              <span class="pat-chip pat-chip-ac">AC</span>
+              <span class="pat-risk risk-medium">Medium Risk</span>
+            </div>
+            <h3 class="pat-name">Asymmetric Choice</h3>
+            <p class="pat-short">Accept path is visually prominent; reject path is styled to be ignored.</p>
+            <div class="pat-detail" id="pd-asymmetric_choice">
+              <p>One option (usually "accept") is rendered as a large, colorful, prominent button while the alternative is a small gray text link or barely-visible secondary element.</p>
+              <div class="pat-example">Large blue "Accept All Cookies" button vs. 10px gray "manage preferences"</div>
+            </div>
+          </div>
+        </button>
+
+        <button class="pat-card" data-pattern="trick_question">
+          <div class="pat-card-inner">
+            <div class="pat-top">
+              <span class="pat-chip pat-chip-tq">TQ</span>
+              <span class="pat-risk risk-medium">Medium Risk</span>
+            </div>
+            <h3 class="pat-name">Trick Question</h3>
+            <p class="pat-short">Double-negative phrasing makes the correct opt-out action unclear.</p>
+            <div class="pat-detail" id="pd-trick_question">
+              <p>Checkbox labels are phrased using double negatives so that checking means <em>not</em> subscribing, or vice versa, exploiting cognitive load at the point of purchase.</p>
+              <div class="pat-example">"Uncheck if you do not wish to not receive our newsletter"</div>
+            </div>
+          </div>
+        </button>
+
+        <button class="pat-card" data-pattern="misdirection">
+          <div class="pat-card-inner">
+            <div class="pat-top">
+              <span class="pat-chip pat-chip-md">MD</span>
+              <span class="pat-risk risk-medium">Medium Risk</span>
+            </div>
+            <h3 class="pat-name">Misdirection</h3>
+            <p class="pat-short">Visual emphasis steers users away from their preferred option.</p>
+            <div class="pat-detail" id="pd-misdirection">
+              <p>The cancel or back action is styled to appear disabled, grayed out, or positioned away from natural reading flow, while confirm and purchase actions receive strong visual emphasis.</p>
+              <div class="pat-example">Prominent "Confirm &amp; Pay $89.99" vs. faint gray "Go back"</div>
+            </div>
+          </div>
+        </button>
+
+        <button class="pat-card" data-pattern="social_proof">
+          <div class="pat-card-inner">
+            <div class="pat-top">
+              <span class="pat-chip pat-chip-sp">SP</span>
+              <span class="pat-risk risk-low">Low Risk</span>
+            </div>
+            <h3 class="pat-name">Social Proof</h3>
+            <p class="pat-short">Unverifiable peer-pressure claims nudge decisions through false consensus.</p>
+            <div class="pat-detail" id="pd-social_proof">
+              <p>Live viewer counts, trending badges, and subscriber totals are frequently fabricated or inflated. They exploit social conformity to push users toward the preferred action.</p>
+              <div class="pat-example">"3,847 people viewing this right now"</div>
+            </div>
+          </div>
+        </button>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- DATA AND TRAINING -->
+  <section id="data" class="section section-alt">
+    <div class="container">
+      <div class="section-label">Data and Training</div>
+      <h2 class="section-h2">Building the Training Pipeline</h2>
+      <p class="section-intro">
+        Each pattern class is detected by a dedicated binary XGBoost classifier trained on
+        real labeled captures augmented with calibrated synthetic data. The pipeline covers
+        collection, labeling, augmentation, model fitting, and calibration.
+      </p>
+
+      <div class="data-cards">
+        <div class="data-card">
+          <div class="dc-num">01</div>
+          <h3>Real Captures</h3>
+          <p>
+            A Playwright-based browser automation pipeline navigated live websites, extracted
+            choice sets from the Accessibility Tree and DOM, and stored results including
+            option text, CSS properties, and subtree structure in a PostgreSQL database.
+          </p>
+        </div>
+        <div class="data-card">
+          <div class="dc-num">02</div>
+          <h3>Human Labeling</h3>
+          <p>
+            Captured choice sets were reviewed by human annotators using a custom labeling
+            toolchain, assigning each a decision (dark or not dark) and, for dark examples,
+            one or more pattern-type tags from the eight-class taxonomy.
+          </p>
+        </div>
+        <div class="data-card">
+          <div class="dc-num">03</div>
+          <h3>Synthetic Augmentation</h3>
+          <p>
+            Rare patterns required synthetic augmentation: pattern-specific choice sets
+            generated programmatically with distributions calibrated to match real captures
+            (dialog rates, option counts, CSS targets, text-regex hit rates) to reduce
+            distributional shift.
+          </p>
+        </div>
+        <div class="data-card">
+          <div class="dc-num">04</div>
+          <h3>Per-Pattern Classifiers</h3>
+          <p>
+            One XGBoost <code>binary:logistic</code> model per pattern. Class imbalance
+            handled via <code>scale_pos_weight</code>. Early stopping with grouped shuffle
+            splitting prevents within-site leakage. Hyperparameters: max depth 5,
+            lr 0.05, subsampling 0.9.
+          </p>
+        </div>
+        <div class="data-card">
+          <div class="dc-num">05</div>
+          <h3>Platt Scaling Calibration</h3>
+          <p>
+            Raw XGBoost probabilities are post-hoc calibrated by fitting a logistic
+            regression on held-out logit scores. Validated for reduced Brier score and
+            log-loss across all eight classes on a golden real-labeled set.
+          </p>
+        </div>
+        <div class="data-card">
+          <div class="dc-num">06</div>
+          <h3>Choice Set Abstraction</h3>
+          <p>
+            Rather than evaluating elements in isolation, the system groups related elements
+            into choice sets. An accept button and its guilt-laden decline link form one set,
+            letting the model reason about the <em>relationship</em> between options.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOOLING -->
+  <section id="tooling" class="section section-alt">
+    <div class="container">
+      <div class="section-label">Internal Tooling</div>
+      <h2 class="section-h2">Built for Iteration</h2>
+      <p class="section-intro">Two custom dashboards drove the entire model lifecycle — one for training and evaluating classifiers, one for monitoring how those models perform against real-world extension traffic.</p>
+
+      <div class="tool-two-col" style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start;">
+
+        <!-- ── Model Playground ── -->
+        <div class="tool-panel">
+          <div class="tool-screenshot-wrap">
+            <img src="images/model-playground-screenshot.avif"
+                 alt="Model Playground interface"
+                 class="tool-screenshot" loading="lazy">
+          </div>
+          <div class="tool-tag">Model Training</div>
+          <h3 class="tool-h3">Model Playground</h3>
+          <p class="tool-p">A browser-based training environment built into the Flask backend. Researchers select one of the eight pattern classes, tune XGBoost hyperparameters, toggle individual features from the 84-feature catalog, and launch a full cross-validated training run — without touching a terminal.</p>
+          <ul class="tool-list">
+            <li><strong>Per-pattern training</strong> — each of the eight classifiers is trained independently, with positive counts and full run history displayed inline.</li>
+            <li><strong>Synthetic + golden fusion</strong> — calibrated synthetic negatives are injected before splitting; the run is then evaluated against the curated golden set to measure real-world precision.</li>
+            <li><strong>Live ROC &amp; PR curves</strong> — rendered after each run with Youden's J and best-F1 operating points annotated directly on the chart.</li>
+            <li><strong>Feature importance</strong> — XGBoost gain scores for the top-<em>k</em> features reveal which signal families (cosine similarity, lexical, visual, structural) drive each classifier.</li>
+            <li><strong>Sigmoid calibration</strong> — a post-hoc Platt calibrator is fit on a held-out split; Brier score before and after is shown to confirm outputs are true probabilities.</li>
+            <li><strong>One-click promote</strong> — qualifying runs are promoted to production from the UI; the served model refreshes within minutes via a TTL cache.</li>
+          </ul>
+        </div>
+
+        <!-- ── Gatekeeper Dashboard ── -->
+        <div class="tool-panel">
+          <div class="tool-screenshot-wrap">
+            <img src="images/gatekeeper-dashboard.avif"
+                 alt="Gatekeeper Analysis Dashboard"
+                 class="tool-screenshot" loading="lazy">
+          </div>
+          <div class="tool-tag">Traffic Monitoring</div>
+          <h3 class="tool-h3">Gatekeeper Analysis Dashboard</h3>
+          <p class="tool-p">A server-side analytics dashboard that turns the raw stream of extension events into structured insight — making it possible to measure how effectively the two-stage pipeline filters noise before any classifier runs.</p>
+          <ul class="tool-list">
+            <li><strong>End-to-end funnel</strong> — tracks every page scan from initial extraction through noise filtering, cosine-similarity gating, server receipt, and final pattern confirmation in a single stat row.</li>
+            <li><strong>Pass vs. Block over time</strong> — a daily time-series chart shows how gate pass rates shift as browsing patterns and threshold settings change.</li>
+            <li><strong>Score distribution</strong> — overlapping histograms of cosine similarity for gate-filtered, dark-pattern-positive, and gate-passed-no-result candidates reveal where the threshold sits relative to the score mass.</li>
+            <li><strong>Per-domain breakdown</strong> — a ranked table of domains by pass count, block count, and confirmed server hits identifies which sites produce the most real patterns.</li>
+            <li><strong>Calibrated confidence</strong> — per-class probability scores from the promoted classifiers are shown alongside raw gate scores, validating that calibration holds on live traffic.</li>
+          </ul>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section id="results" class="section section-brand-tint">
+    <div class="container">
+      <div class="section-label">Results and Key Learnings</div>
+      <h2 class="section-h2">What We Achieved</h2>
+
+      <div class="results-stats-row">
+        <div class="rs-card">
+          <span class="rs-n">8</span>
+          <span class="rs-l">Pattern classifiers, one per type</span>
+        </div>
+        <div class="rs-card">
+          <span class="rs-n">80+</span>
+          <span class="rs-l">Engineered features per choice set</span>
+        </div>
+        <div class="rs-card">
+          <span class="rs-n">~80%</span>
+          <span class="rs-l">Elements filtered before any server call</span>
+        </div>
+        <div class="rs-card">
+          <span class="rs-n">&lt;150ms</span>
+          <span class="rs-l">In-browser MiniLM embedding time</span>
+        </div>
+        <div class="rs-card">
+          <span class="rs-n">&lt;200ms</span>
+          <span class="rs-l">End-to-end classification latency</span>
+        </div>
+      </div>
+
+      <div class="achv-grid">
+        <div class="achv-card achv-technical">
+          <div class="achv-label">Technical Achievement</div>
+          <h3>In-Browser First Stage</h3>
+          <p>Running a 23 MB MiniLM model via ONNX Runtime WASM in a Chrome MV3 extension without blocking the main thread required a dedicated offscreen document and message-passing architecture. Embedding completes in under 150 ms on representative hardware.</p>
+        </div>
+        <div class="achv-card achv-technical">
+          <div class="achv-label">Technical Achievement</div>
+          <h3>Gatekeeper Efficiency</h3>
+          <p>The dual noise-filter and cosine-similarity gate reduces server calls by roughly 80% versus a naive all-elements approach. The extension runs unobtrusively on content-rich pages without perceptible latency or privacy leakage from user browsing context.</p>
+        </div>
+        <div class="achv-card achv-technical">
+          <div class="achv-label">Technical Achievement</div>
+          <h3>Production Deployment</h3>
+          <p>The classification API is deployed at <code>darkpatterns.duckdns.org</code> behind HTTPS, handling concurrent requests from multiple active extension users with average response latency under 200 ms for a full scoring request.</p>
+        </div>
+        <div class="achv-card achv-learning">
+          <div class="achv-label">Key Learning</div>
+          <h3>Choice Sets Beat Elements</h3>
+          <p>Evaluating elements individually misses most dark patterns. The manipulation is expressed in the relationship between options: a prominent accept versus a hidden decline, not in any single element alone. Choice set abstraction was the critical architectural decision.</p>
+        </div>
+        <div class="achv-card achv-learning">
+          <div class="achv-label">Key Learning</div>
+          <h3>Synthetic Data Fills Gaps</h3>
+          <p>Rare patterns like privacy zuckering required programmatic augmentation. Calibrating synthetic distributions to match real-capture statistics (dialog rates, CSS targets, option counts) was essential to avoiding distributional shift between training and live inference.</p>
+        </div>
+        <div class="achv-card achv-future">
+          <div class="achv-label">Future Work</div>
+          <h3>Long-Term Potential</h3>
+          <p>Expanding training captures from SaaS and checkout flows, refining synthetic distributions for rare patterns, cross-browser compatibility (Firefox, Edge), and evaluating lightweight server-side model alternatives for better scalability.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TEAM -->
+  <section id="team" class="section section-alt">
+    <div class="container">
+      <div class="section-label">The Team</div>
+      <h2 class="section-h2">Built at Berkeley</h2>
+      <p class="section-intro">
+        Five UC Berkeley MIDS students in the Spring 2026 cohort built this project end-to-end:
+        from dataset curation and model training to the Chrome extension and Flask backend.
+      </p>
+
+      <div class="team-grid">
+
+        <div class="team-card">
+          <div class="team-avatar">JL</div>
+          <div class="team-info">
+            <div class="team-name">Jane Lai</div>
+            <div class="team-role">ML Engineering and Model Training</div>
+            <p class="team-bio">Focused on XGBoost model architecture, feature engineering, and calibration pipeline design across all eight pattern classifiers.</p>
+            <a href="https://www.ischool.berkeley.edu/people/jane-lai" class="team-link" target="_blank" rel="noopener">
+              iSchool Profile &rarr;
+            </a>
+          </div>
+        </div>
+
+        <div class="team-card">
+          <div class="team-avatar">BP</div>
+          <div class="team-info">
+            <div class="team-name">Bianka Paul</div>
+            <div class="team-role">Full Stack and Extension Development</div>
+            <p class="team-bio">Led Chrome extension architecture, popup UI, and integration with the backend evaluation API and gatekeeper layer.</p>
+            <a href="https://www.ischool.berkeley.edu/people/bianka-paul" class="team-link" target="_blank" rel="noopener">
+              iSchool Profile &rarr;
+            </a>
+          </div>
+        </div>
+
+        <div class="team-card">
+          <div class="team-avatar">CR</div>
+          <div class="team-info">
+            <div class="team-name">Chris Rezny</div>
+            <div class="team-role">Backend and Data Pipeline</div>
+            <p class="team-bio">Built the Flask API, PostgreSQL schema, Playwright capture pipeline, and the custom labeling toolchain for choice-set annotation.</p>
+          </div>
+        </div>
+
+        <div class="team-card">
+          <div class="team-avatar">EG</div>
+          <div class="team-info">
+            <div class="team-name">Eduardo Gonzalez</div>
+            <div class="team-role">NLP and Feature Engineering</div>
+            <p class="team-bio">Designed the V3 text signal feature catalog spanning urgency, scarcity, social proof, guilt-framing, and promotional phrase detection.</p>
+            <a href="https://www.ischool.berkeley.edu/people/eduardo-gonzalez" class="team-link" target="_blank" rel="noopener">
+              iSchool Profile &rarr;
+            </a>
+          </div>
+        </div>
+
+        <div class="team-card">
+          <div class="team-avatar">SA</div>
+          <div class="team-info">
+            <div class="team-name">Saleh Alhumaid</div>
+            <div class="team-role">Data Science and Model Evaluation</div>
+            <p class="team-bio">Led dataset labeling strategy, synthetic data generation pipelines, calibration evaluation, and model performance benchmarking.</p>
+            <a href="https://www.ischool.berkeley.edu/people/saleh-alhumaid" class="team-link" target="_blank" rel="noopener">
+              iSchool Profile &rarr;
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="ischool-credit">
+        <a href="https://www.ischool.berkeley.edu/projects/2026/deceptive-pattern-detector"
+           target="_blank" rel="noopener" class="ischool-link">
+          View full project on UC Berkeley iSchool &rarr;
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <svg class="footer-icon" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="15" cy="15" r="13.5" fill="#e9a23b" stroke="#c97d20" stroke-width="1.5"/>
+          <circle cx="20" cy="21" r="5.5" fill="#fff" stroke="#c97d20" stroke-width="1.2"/>
+        </svg>
+        <span class="footer-brand-text">Deceptive Pattern Detector</span>
+      </div>
+      <div class="footer-meta">
+        <span>UC Berkeley School of Information</span>
+        <span class="fsep">&middot;</span>
+        <span>DATASCI 210 Capstone</span>
+        <span class="fsep">&middot;</span>
+        <span>Spring 2026</span>
+      </div>
+      <div class="footer-names">
+        Jane Lai &nbsp;&middot;&nbsp; Bianka Paul &nbsp;&middot;&nbsp; Chris Rezny &nbsp;&middot;&nbsp; Eduardo Gonzalez &nbsp;&middot;&nbsp; Saleh Alhumaid
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
