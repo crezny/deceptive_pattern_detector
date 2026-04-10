@@ -692,7 +692,7 @@
     <div class="container">
       <div class="section-label">Internal Tooling</div>
       <h2 class="section-h2">Built for Iteration</h2>
-      <p class="section-intro">Two custom dashboards drove the entire model lifecycle — one for training and evaluating classifiers, one for monitoring how those models perform against real-world extension traffic.</p>
+      <p class="section-intro">Two custom dashboards drove the entire model lifecycle: one for training and evaluating classifiers, one for monitoring how those models perform against real-world extension traffic.</p>
 
       <div class="tool-two-col" style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start;">
 
@@ -705,14 +705,14 @@
           </div>
           <div class="tool-tag">Model Training</div>
           <h3 class="tool-h3">Model Playground</h3>
-          <p class="tool-p">A browser-based training environment built into the Flask backend. Researchers select one of the eight pattern classes, tune XGBoost hyperparameters, toggle individual features from the 84-feature catalog, and launch a full cross-validated training run — without touching a terminal.</p>
+          <p class="tool-p">A browser-based training environment built into the Flask backend. Researchers select one of the eight pattern classes, tune XGBoost hyperparameters, toggle individual features from the 84-feature catalog, and launch a full cross-validated training run: without touching a terminal.</p>
           <ul class="tool-list">
-            <li><strong>Per-pattern training</strong> — each of the eight classifiers is trained independently, with positive counts and full run history displayed inline.</li>
-            <li><strong>Synthetic + golden fusion</strong> — calibrated synthetic negatives are injected before splitting; the run is then evaluated against the curated golden set to measure real-world precision.</li>
-            <li><strong>Live ROC &amp; PR curves</strong> — rendered after each run with Youden's J and best-F1 operating points annotated directly on the chart.</li>
-            <li><strong>Feature importance</strong> — XGBoost gain scores for the top-<em>k</em> features reveal which signal families (cosine similarity, lexical, visual, structural) drive each classifier.</li>
-            <li><strong>Sigmoid calibration</strong> — a post-hoc Platt calibrator is fit on a held-out split; Brier score before and after is shown to confirm outputs are true probabilities.</li>
-            <li><strong>One-click promote</strong> — qualifying runs are promoted to production from the UI; the served model refreshes within minutes via a TTL cache.</li>
+            <li><strong>Per-pattern training</strong>: each of the eight classifiers is trained independently, with positive counts and full run history displayed inline.</li>
+            <li><strong>Synthetic + golden fusion</strong>: calibrated synthetic negatives are injected before splitting; the run is then evaluated against the curated golden set to measure real-world precision.</li>
+            <li><strong>Live ROC &amp; PR curves</strong>: rendered after each run with Youden's J and best-F1 operating points annotated directly on the chart.</li>
+            <li><strong>Feature importance</strong>: XGBoost gain scores for the top-<em>k</em> features reveal which signal families (cosine similarity, lexical, visual, structural) drive each classifier.</li>
+            <li><strong>Sigmoid calibration</strong>: a post-hoc Platt calibrator is fit on a held-out split; Brier score before and after is shown to confirm outputs are true probabilities.</li>
+            <li><strong>One-click promote</strong>: qualifying runs are promoted to production from the UI; the served model refreshes within minutes via a TTL cache.</li>
           </ul>
         </div>
 
@@ -725,13 +725,13 @@
           </div>
           <div class="tool-tag">Traffic Monitoring</div>
           <h3 class="tool-h3">Gatekeeper Analysis Dashboard</h3>
-          <p class="tool-p">A server-side analytics dashboard that turns the raw stream of extension events into structured insight — making it possible to measure how effectively the two-stage pipeline filters noise before any classifier runs.</p>
+          <p class="tool-p">A server-side analytics dashboard that turns the raw stream of extension events into structured insight: making it possible to measure how effectively the two-stage pipeline filters noise before any classifier runs.</p>
           <ul class="tool-list">
-            <li><strong>End-to-end funnel</strong> — tracks every page scan from initial extraction through noise filtering, cosine-similarity gating, server receipt, and final pattern confirmation in a single stat row.</li>
-            <li><strong>Pass vs. Block over time</strong> — a daily time-series chart shows how gate pass rates shift as browsing patterns and threshold settings change.</li>
-            <li><strong>Score distribution</strong> — overlapping histograms of cosine similarity for gate-filtered, dark-pattern-positive, and gate-passed-no-result candidates reveal where the threshold sits relative to the score mass.</li>
-            <li><strong>Per-domain breakdown</strong> — a ranked table of domains by pass count, block count, and confirmed server hits identifies which sites produce the most real patterns.</li>
-            <li><strong>Calibrated confidence</strong> — per-class probability scores from the promoted classifiers are shown alongside raw gate scores, validating that calibration holds on live traffic.</li>
+            <li><strong>End-to-end funnel</strong>: tracks every page scan from initial extraction through noise filtering, cosine-similarity gating, server receipt, and final pattern confirmation in a single stat row.</li>
+            <li><strong>Pass vs. Block over time</strong>: a daily time-series chart shows how gate pass rates shift as browsing patterns and threshold settings change.</li>
+            <li><strong>Score distribution</strong>: overlapping histograms of cosine similarity for gate-filtered, dark-pattern-positive, and gate-passed-no-result candidates reveal where the threshold sits relative to the score mass.</li>
+            <li><strong>Per-domain breakdown</strong>: a ranked table of domains by pass count, block count, and confirmed server hits identifies which sites produce the most real patterns.</li>
+            <li><strong>Calibrated confidence</strong>: per-class probability scores from the promoted classifiers are shown alongside raw gate scores, validating that calibration holds on live traffic.</li>
           </ul>
         </div>
 
